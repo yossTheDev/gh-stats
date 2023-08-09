@@ -15,25 +15,29 @@
   const getData = async () => {
     loading = true;
     repo_data = null;
+    releases = null;
 
     try {
-      const res = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/releases`
-      );
-
-      repo_data = await (
-        await fetch(`https://api.github.com/repos/${owner}/${repo}`)
-      ).json();
+      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
 
       status = res.status;
-      releases = await res.json();
 
-      total_downloads = getTotalRepoDownloads(releases);
+      if (res.status === 200) {
+        repo_data = await res.json();
 
-      if (!recent.find((item) => item === owner + "/" + repo))
-        recent = [...recent, owner + "/" + repo];
+        releases = await (
+          await fetch(`https://api.github.com/repos/${owner}/${repo}/releases`)
+        ).json();
 
-      localStorage.setItem("recent_test", JSON.stringify(recent));
+        console.log(releases);
+
+        total_downloads = getTotalRepoDownloads(releases);
+
+        if (!recent.find((item) => item === owner + "/" + repo))
+          recent = [...recent, owner + "/" + repo];
+
+        localStorage.setItem("recent_test", JSON.stringify(recent));
+      }
     } finally {
       loading = false;
     }
@@ -74,13 +78,18 @@
   </div>
 
   <!-- Inputs -->
-  <div class="md:flex-row flex flex-col h-fit my-auto gap-3 w-fit mx-auto p-1">
+  <form
+    on:submit|preventDefault={getData}
+    class="md:flex-row flex flex-col h-fit my-auto gap-3 w-fit mx-auto p-1"
+  >
     <div class="form-control w-full max-w-xs">
-      <label class="label">
+      <label for="owner" class="label">
         <span class="label-text">GitHub Profile/Organization</span>
       </label>
       <input
+        id="owner"
         bind:value={owner}
+        required
         type="text"
         placeholder="Owner"
         class="input w-full max-w-xs mx-auto input-bordered"
@@ -89,10 +98,12 @@
 
     <div class="flex gap-3">
       <div class="form-control w-full max-w-xs">
-        <label class="label">
+        <label for="repo" class="label">
           <span class="label-text">Repository name</span>
         </label>
         <input
+          id="repo"
+          required
           bind:value={repo}
           type="text"
           placeholder="Repo"
@@ -100,7 +111,7 @@
         />
       </div>
 
-      <button on:click={getData} class="btn btn-circle btn-accent mt-auto">
+      <button type="submit" class="btn btn-circle btn-accent mt-auto">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="icon icon-tabler icon-tabler-search"
@@ -119,7 +130,7 @@
         </svg>
       </button>
     </div>
-  </div>
+  </form>
 
   <!-- Content -->
   <div class="flex flex-auto flex-col mt-2 md:p-4 p-3">
@@ -128,7 +139,7 @@
       <div
         class="bg-base-300/70 rounded-2xl shadow-inner py-2 px-3 md:mx-0 mx-2"
       >
-        <p class="font-bold">Recents</p>
+        <p class="font-bold select-none">Recents</p>
         <div class="flex flex-row gap-2 p-1 mt-2 overflow-scroll">
           {#each recent as item}
             <button
@@ -182,10 +193,10 @@
               alt="avatar"
               src={repo_data.owner.avatar_url}
             />
-            <p class="font-bold my-auto">{repo_data.full_name}</p>
+            <p class="font-bold my-auto ml-2">{repo_data.full_name}</p>
           </div>
 
-          <p>{repo_data.description}</p>
+          <p class="mt-2">{repo_data.description}</p>
 
           <div class="flex gap-2 mt-2">
             <svg
@@ -438,11 +449,13 @@
 
   <!-- Footer -->
   <span class="mx-auto text-xs mt-2"
-    >Made with 🧡 Svelte by <a href="https://github.com/yossthedev/"
-      >@yossthedev</a
+    >Made with 🧡 Svelte by <a
+      class="link"
+      href="https://github.com/yossthedev/">@yossthedev</a
     ></span
   >
-  <a class="mx-auto text-xs mb-2" href="https://github.com/yossthedev/gh-stats"
-    >Source Code</a
+  <a
+    class="mx-auto text-xs mb-2 link"
+    href="https://github.com/yossthedev/gh-stats">Source Code</a
   >
 </main>
